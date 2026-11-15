@@ -4,7 +4,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { createProvider } from '../provider/server.mjs';
-import { receiveCurrent } from '../src/domain.mjs';
+import { connectGateway, receiveCurrent } from '../src/domain.mjs';
 import { Archive } from '../src/archive.mjs';
 import { digestHex } from '../provider/digest.mjs';
 
@@ -28,8 +28,9 @@ test('现有业务入口真实收存来源资料并可重新打开', async () =>
   const provider = await createProvider();
   const directory = await mkdtemp(join(tmpdir(), 'business-'));
   try {
-    const result = await receiveCurrent(provider.base, directory);
-    assert.ok(result);
+    const gateway = await connectGateway(provider.base, { username: 'operator', password: 'local-demo-password' });
+    const result = await receiveCurrent(gateway, directory);
+    assert.ok(result.receipt);
     const archive = new Archive(directory);
     const receipts = await archive.list();
     assert.ok(receipts.length > 0);
